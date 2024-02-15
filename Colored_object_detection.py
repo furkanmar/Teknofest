@@ -3,10 +3,10 @@ import numpy as np
 import time  # Eklenen kütüphane
 
 def detect_color(image, target_color):
-    # Convert the image from BGR to HSV
+    # Resmi BGR'den HSV'ye dönüştür
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # Define color ranges for detection (blue, green, yellow, and red)
+    # Renk tespiti için renk aralıklarını tanımla (mavi, yeşil, sarı ve kırmızı)
     color_ranges = {
         'blue': ([100, 50, 50], [120, 255, 255]),  # Adjusted for blue
         'green': ([40, 50, 50], [80, 255, 255]),
@@ -14,16 +14,16 @@ def detect_color(image, target_color):
         'red': ([0, 100, 100], [10, 255, 255]) + ([170, 100, 100], [180, 255, 255]),  # Adjusted for red (considering wrap-around)
     }
 
-    # Get the color range for the target color
+    # Hedef rengin renk aralığını al
     target_range = color_ranges.get(target_color.lower())
 
     if target_range is None:
-        return None, None  # Return None for both detected color and bounding box
+        return None, None  # Hem tespit edilen rengi hem de sınırlayıcı kutuyu için None döndür
 
-    # Create a mask based on the color range in the HSV image
+    # HSV görüntüsündeki renk aralığına dayalı bir maske oluştur
     mask = cv2.inRange(hsv_image, np.array(target_range[0]), np.array(target_range[1]))
 
-    # Apply the mask and find contours
+    # Maskeyi uygula ve konturları bul
     masked_image = cv2.bitwise_and(image, image, mask=mask)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -31,18 +31,18 @@ def detect_color(image, target_color):
     bounding_box = None
 
     for contour in contours:
-        # Filter out small contours
-        if cv2.contourArea(contour) > 5000:  # Adjust this threshold based on your needs
-            # Get the bounding rectangle around the contour
+        # Küçük konturları filtrele
+        if cv2.contourArea(contour) > 5000:  # Bu eşik değeri ihtiyaca göre ayarlayın
+            # Kontur etrafında sınırlayıcı dikdörtgeni al
             x, y, w, h = cv2.boundingRect(contour)
 
-            # Get the region of interest (ROI)
+            # İlgili bölgenin (ROI) ilgisini çek
             roi = masked_image[y:y+h, x:x+w]
 
-            # Calculate the mean color of the ROI in the HSV space
+            # HSV uzayındaki ROI'nin ortalama rengini hesapla
             mean_color_hsv = cv2.mean(roi)[:3]
 
-            # Check if the mean color is close to the color range
+            # Ortalama renk, hedef renk aralığına yakın mı kontrol et
             if target_color.lower() == 'red' and (mean_color_hsv[0] > 170 or mean_color_hsv[0] < 10):
                 detected_color = target_color
                 bounding_box = (x, y, w, h)
@@ -55,61 +55,61 @@ def detect_color(image, target_color):
     return detected_color, bounding_box
 
 def draw_circle(image, center, bgr_color):
-    # Draw a filled circle around the center with the specified color
+    # Belirtilen renkte merkezin etrafına dolu bir daire çiz
     cv2.circle(image, center, 50, bgr_color, -1)
 
-# Start the camera connection
+# Kamera bağlantısını başlat
 cap = cv2.VideoCapture(0)
 
-# Define the color sequence
+# Renk sırasını tanımla
 color_sequence = ['red', 'blue', 'yellow', 'green']
 
 for target_color in color_sequence:
-    # Capture a frame from the camera
+    # Kameradan bir kare yakala
     ret, image = cap.read()
 
-    # Check if the frame was captured successfully
+    # Kare başarıyla yakalandı mı kontrol et
     if not ret:
         break
 
     cv2.putText(image, f"Searching for {target_color} object...", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.imshow('Frame', image)
-    cv2.waitKey(1000)  # Wait for 1 second
+    cv2.waitKey(1000)  # 1 saniye beklemek için
 
     start_time = time.time()  # Başlangıç zamanını kaydet
 
     while True:
-        # Capture a frame from the camera
+        # Kameradan bir kare yakala
         ret, frame = cap.read()
         if not ret:
             break
 
-        # Detect the color and get bounding box
+        # Rengi tespit et ve sınırlayıcı kutuyu al
         detected_color, bounding_box = detect_color(frame, target_color)
 
         if detected_color is not None:
-            # Display the detected color on the camera window with a bigger font
+            # Kameradaki renkli nesneyi daha büyük bir font ile göster
             cv2.putText(frame, f"{detected_color.capitalize()} object found!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2, cv2.LINE_AA)
             
-            # Display message indicating that everything in the bounding box is of the detected color
+            # Sınırlayıcı kutudaki her şeyin tespit edilen renkte olduğunu belirten bir mesajı göster
             cv2.putText(frame, f"Everything in the bounding box is {detected_color.capitalize()}.", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2, cv2.LINE_AA)
             
             if bounding_box is not None:
-                # Draw a circle on the center of the bounding box (example: green circle)
+                # Sınırlayıcı kutunun merkezine (örneğin: yeşil daire) bir daire çiz
                 draw_circle(frame, (bounding_box[0] + bounding_box[2] // 2, bounding_box[1] + bounding_box[3] // 2), (0, 255, 0))
             
             cv2.imshow('Frame', frame)
             elapsed_time = time.time() - start_time
-            if elapsed_time >= 3:  # Wait for 3 seconds
+            if elapsed_time >= 3:  # 3 saniye beklemek için
                 break
 
-        # Show the image
+        # Çerçeveyi göster
         cv2.imshow('Frame', frame)
 
-        # Break the loop if 'q' is pressed
+        # 'q' tuşuna basıldığında döngüyü kır
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-# Release the camera connection and close the window
+# Kamera bağlantısını serbest bırak ve pencereyi kapat
 cap.release()
 cv2.destroyAllWindows()
