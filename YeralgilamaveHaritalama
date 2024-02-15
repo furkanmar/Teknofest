@@ -1,8 +1,8 @@
-Başlangıç
+Başlangıç                                                                 
 
       |
       v
-Rastgele Başlangıç Pozisyonu Belirle
+Rastgele Başlangıç Pozisyonu Belirle        
       |
       v
     Algılama
@@ -24,3 +24,27 @@ Başlangıç Pozisyonunu Göster
       |
       v
    Bitiş
+///////////////////////////////////////////////////////////
+
+Başlangıç
+    |
+    v
+Rastgele Başlangıç Pozisyonu Belirle
+    |
+    v
+  Algılama
+    |
+    v
+┌─────┴─────┐
+Evet         Hayır
+  │            │
+  v            v
+Haritaya   Başlangıç Pozisyonunu 
+  Ekle         Göster
+    │            │
+    v            v
+ Haritayı      Bitiş
+  Göster
+////////////////////////////////////////////////////
+Not: Algoritmalarda sıkıntılar var daha düzgün bir algoritma tanımla.
+
